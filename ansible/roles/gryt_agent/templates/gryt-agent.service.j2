@@ -9,7 +9,13 @@ Type=simple
 User={{ gryt_user }}
 Group={{ gryt_group }}
 WorkingDirectory={{ agent_install_dir }}
-EnvironmentFile={{ agent_install_dir }}/.envrc
+
+# Environment variables
+Environment="AGENT_API_KEY={{ agent_api_key }}"
+Environment="GRYT_ENCRYPTION_KEY={{ gryt_encryption_key }}"
+Environment="AGENT_HOST={{ agent_host }}"
+Environment="AGENT_PORT={{ agent_port }}"
+Environment="GRYT_DOCKER_IMAGE={{ gryt_docker_image }}"
 
 # Start the agent using virtual environment
 ExecStart={{ agent_install_dir }}/venv/bin/python -m agent.main
