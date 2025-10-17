@@ -37,3 +37,11 @@ agent_git_version: "master"  # or specific tag/branch
 
 # Python version
 python_version: "3.12"
+
+# Tailscale configuration
+tailscale_enabled: false  # Set to true to enable Tailscale
+# tailscale_authkey: ""  # Set this in host_vars or pass via -e
+# tailscale_hostname: ""  # Optional: Override hostname
+# tailscale_advertise_tags: []  # Optional: e.g., ["tag:agent", "tag:ci"]
+# tailscale_accept_routes: false  # Optional: Accept subnet routes
+# tailscale_ssh: false  # Optional: Enable Tailscale SSH

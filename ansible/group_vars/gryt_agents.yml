@@ -43,3 +43,11 @@ docker_cleanup_schedule: "0 3 * * *"  # 3 AM daily
 
 # Monitoring
 enable_monitoring: false  # Set to true to enable Prometheus node_exporter
+
+# Tailscale configuration
+tailscale_enabled: true  # Set to false to disable Tailscale
+tailscale_authkey: "{{ vault_tailscale_authkey | default('') }}"
+# tailscale_hostname: ""  # Optional: Override hostname (defaults to inventory_hostname)
+# tailscale_advertise_tags: ["tag:agent", "tag:ci"]  # Optional: Tailscale ACL tags
+# tailscale_accept_routes: false  # Optional: Accept subnet routes
+# tailscale_ssh: false  # Optional: Enable Tailscale SSH

@@ -74,6 +74,24 @@
   when: ufw_enabled | default(true) and ufw_allow_ssh | default(true)
   tags: [security, firewall]
 
+- name: Allow Tailscale interface (tailscale0)
+  ufw:
+    rule: allow
+    interface: tailscale0
+    direction: in
+  when: ufw_enabled | default(true) and tailscale_enabled | default(false)
+  tags: [security, firewall, tailscale]
+
+- name: Allow agent port from Tailscale network
+  ufw:
+    rule: allow
+    port: "{{ agent_port }}"
+    proto: tcp
+    interface: tailscale0
+    direction: in
+  when: ufw_enabled | default(true) and tailscale_enabled | default(false)
+  tags: [security, firewall, tailscale]
+
 - name: Allow agent port from specific IPs
   ufw:
     rule: allow

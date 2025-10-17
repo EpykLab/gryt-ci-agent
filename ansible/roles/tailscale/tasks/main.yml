@@ -1,0 +1,66 @@
+---
+# Tailscale installation and configuration tasks
+
+- name: Add Tailscale GPG key
+  apt_key:
+    url: https://pkgs.tailscale.com/stable/ubuntu/noble.noarmor.gpg
+    state: present
+    keyring: /usr/share/keyrings/tailscale-archive-keyring.gpg
+  tags: [tailscale, install]
+
+- name: Add Tailscale repository
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu noble main"
+    state: present
+    filename: tailscale
+  tags: [tailscale, install]
+
+- name: Install Tailscale
+  apt:
+    name: tailscale
+    state: present
+    update_cache: true
+  tags: [tailscale, install]
+
+- name: Check if Tailscale is already authenticated
+  command: tailscale status --json
+  register: tailscale_status
+  changed_when: false
+  failed_when: false
+  tags: [tailscale, config]
+
+- name: Authenticate Tailscale
+  command: >
+    tailscale up
+    --authkey={{ tailscale_authkey }}
+    --hostname={{ tailscale_hostname | default(inventory_hostname) }}
+    {% if tailscale_advertise_tags is defined %}--advertise-tags={{ tailscale_advertise_tags | join(',') }}{% endif %}
+    {% if tailscale_accept_routes | default(false) %}--accept-routes{% endif %}
+    {% if tailscale_ssh | default(false) %}--ssh{% endif %}
+  when: 
+    - tailscale_authkey is defined
+    - (tailscale_status.rc != 0 or 'NeedsLogin' in tailscale_status.stdout)
+  register: tailscale_up
+  tags: [tailscale, config]
+
+- name: Enable and start Tailscale service
+  systemd:
+    name: tailscaled
+    enabled: true
+    state: started
+  tags: [tailscale, service]
+
+- name: Get Tailscale IP address
+  command: tailscale ip -4
+  register: tailscale_ip
+  changed_when: false
+  tags: [tailscale, config]
+
+- name: Display Tailscale information
+  debug:
+    msg:
+      - "Tailscale installed and configured"
+      - "Tailscale IP: {{ tailscale_ip.stdout }}"
+      - "Hostname: {{ tailscale_hostname | default(inventory_hostname) }}"
+  when: tailscale_ip.stdout is defined
+  tags: [tailscale, config]

@@ -16,3 +16,6 @@ vault_agent_api_key: "your-secure-api-key-here-32-chars-minimum"
 
 # Encryption key (must match main API)
 vault_gryt_encryption_key: "your-base64-encryption-key-here"
+
+# Tailscale auth key (get from https://login.tailscale.com/admin/settings/keys)
+vault_tailscale_authkey: "tskey-auth-xxxxx-your-key-here"

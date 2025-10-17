@@ -27,6 +27,10 @@
     - role: common
       tags: [common, system]
     
+    - role: tailscale
+      when: tailscale_enabled | default(false)
+      tags: [tailscale, networking]
+    
     - role: security
       tags: [security]
     
