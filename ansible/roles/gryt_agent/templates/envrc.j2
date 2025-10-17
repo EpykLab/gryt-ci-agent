@@ -1,15 +1,16 @@
 # Gryt CI Agent Configuration
 # Ansible managed - do not edit manually
+# Format: systemd EnvironmentFile (no 'export' keyword)
 
 # API Key for authentication (must match main API's AGENT_API_KEY)
-export AGENT_API_KEY="{{ agent_api_key }}"
+AGENT_API_KEY="{{ agent_api_key }}"
 
 # Encryption key (must match main API's GRYT_ENCRYPTION_KEY)
-export GRYT_ENCRYPTION_KEY="{{ gryt_encryption_key }}"
+GRYT_ENCRYPTION_KEY="{{ gryt_encryption_key }}"
 
 # Agent server configuration
-export AGENT_HOST="{{ agent_host }}"
-export AGENT_PORT="{{ agent_port }}"
+AGENT_HOST="{{ agent_host }}"
+AGENT_PORT="{{ agent_port }}"
 
 # Default Docker image for jobs
-export GRYT_DOCKER_IMAGE="{{ gryt_docker_image }}"
+GRYT_DOCKER_IMAGE="{{ gryt_docker_image }}"
