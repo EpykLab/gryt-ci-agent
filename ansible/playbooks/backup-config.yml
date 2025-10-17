@@ -1,0 +1,96 @@
+---
+# Playbook to backup agent configurations
+# Usage: ansible-playbook playbooks/backup-config.yml
+
+- name: Backup Gryt CI Agent Configuration
+  hosts: gryt_agents
+  become: true
+  gather_facts: true
+  
+  vars:
+    backup_dir: "/tmp/gryt-agent-backup-{{ ansible_date_time.epoch }}"
+    local_backup_dir: "./backups/{{ ansible_date_time.date }}"
+  
+  tasks:
+    - name: Create backup directory on agent
+      file:
+        path: "{{ backup_dir }}"
+        state: directory
+        mode: '0700'
+      tags: [backup]
+    
+    - name: Backup agent configuration
+      copy:
+        src: "{{ agent_install_dir }}/.envrc"
+        dest: "{{ backup_dir }}/.envrc"
+        remote_src: true
+      tags: [backup]
+    
+    - name: Backup systemd service file
+      copy:
+        src: "/etc/systemd/system/{{ agent_service_name }}.service"
+        dest: "{{ backup_dir }}/{{ agent_service_name }}.service"
+        remote_src: true
+      tags: [backup]
+    
+    - name: Get service status
+      command: systemctl status {{ agent_service_name }}
+      register: service_status
+      ignore_errors: true
+      tags: [backup]
+    
+    - name: Save service status
+      copy:
+        content: "{{ service_status.stdout }}"
+        dest: "{{ backup_dir }}/service-status.txt"
+      tags: [backup]
+    
+    - name: Get Docker info
+      command: docker info
+      register: docker_info
+      become_user: "{{ gryt_user }}"
+      ignore_errors: true
+      tags: [backup]
+    
+    - name: Save Docker info
+      copy:
+        content: "{{ docker_info.stdout }}"
+        dest: "{{ backup_dir }}/docker-info.txt"
+      tags: [backup]
+    
+    - name: Create archive
+      archive:
+        path: "{{ backup_dir }}"
+        dest: "{{ backup_dir }}.tar.gz"
+        format: gz
+      tags: [backup]
+    
+    - name: Create local backup directory
+      file:
+        path: "{{ local_backup_dir }}"
+        state: directory
+        mode: '0700'
+      delegate_to: localhost
+      run_once: true
+      tags: [fetch]
+    
+    - name: Fetch backup to local machine
+      fetch:
+        src: "{{ backup_dir }}.tar.gz"
+        dest: "{{ local_backup_dir }}/{{ inventory_hostname }}-backup.tar.gz"
+        flat: true
+      tags: [fetch]
+    
+    - name: Cleanup remote backup
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ backup_dir }}"
+        - "{{ backup_dir }}.tar.gz"
+      tags: [cleanup]
+    
+    - name: Display backup location
+      debug:
+        msg: "Backup saved to: {{ local_backup_dir }}/{{ inventory_hostname }}-backup.tar.gz"
+      tags: [always]

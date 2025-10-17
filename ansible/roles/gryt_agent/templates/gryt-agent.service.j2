@@ -1,0 +1,33 @@
+[Unit]
+Description=Gryt CI Agent
+Documentation=https://github.com/your-org/gryt-ci-agent
+After=docker.service network.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User={{ gryt_user }}
+Group={{ gryt_group }}
+WorkingDirectory={{ agent_install_dir }}
+EnvironmentFile={{ agent_install_dir }}/.envrc
+
+# Start the agent
+ExecStart=/usr/bin/python3 -m agent.main
+
+# Restart policy
+Restart={{ agent_service_restart_policy }}
+RestartSec={{ agent_service_restart_sec }}
+StartLimitInterval={{ agent_service_start_limit_interval }}
+StartLimitBurst={{ agent_service_start_limit_burst }}
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier={{ agent_service_name }}
+
+[Install]
+WantedBy=multi-user.target

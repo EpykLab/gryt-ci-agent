@@ -1,0 +1,21 @@
+---
+# Example inventory file - copy to hosts.yml and customize
+
+all:
+  children:
+    gryt_agents:
+      hosts:
+        # DigitalOcean Droplet example
+        do-agent-01:
+          ansible_host: 10.108.0.5
+          ansible_user: root
+          
+        # AWS EC2 example
+        aws-agent-01:
+          ansible_host: 172.31.10.5
+          ansible_user: ubuntu
+          
+        # Hetzner Cloud example
+        hetzner-agent-01:
+          ansible_host: 10.0.0.5
+          ansible_user: root

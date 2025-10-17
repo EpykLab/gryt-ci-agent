@@ -1,0 +1,39 @@
+# Ansible
+*.retry
+ansible.log
+/tmp/
+/retry/
+
+# Vault password file
+.vault_pass
+**/vault.yml
+
+# Inventory files (exclude production configs)
+inventories/production/hosts.yml
+
+# Fact cache
+/tmp/ansible_facts/
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.so
+.venv/
+venv/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

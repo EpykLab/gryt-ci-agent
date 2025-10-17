@@ -1,0 +1,53 @@
+---
+# Playbook to update only the Gryt CI Agent code
+# Usage: ansible-playbook playbooks/update-agent.yml
+
+- name: Update Gryt CI Agent
+  hosts: gryt_agents
+  become: true
+  gather_facts: false
+  
+  tasks:
+    - name: Pull latest agent code
+      git:
+        repo: "{{ agent_git_repo }}"
+        dest: "{{ agent_install_dir }}"
+        version: "{{ agent_git_version }}"
+        force: true
+      become_user: "{{ gryt_user }}"
+      register: git_update
+      tags: [update]
+    
+    - name: Update Python dependencies
+      pip:
+        name: "{{ agent_install_dir }}"
+        editable: true
+        executable: pip3
+      become_user: "{{ gryt_user }}"
+      when: git_update.changed
+      tags: [update]
+    
+    - name: Restart agent service
+      systemd:
+        name: "{{ agent_service_name }}"
+        state: restarted
+      when: git_update.changed
+      tags: [restart]
+    
+    - name: Wait for agent to be ready
+      uri:
+        url: "http://localhost:{{ agent_port }}/health"
+        method: GET
+        status_code: 200
+      register: health_check
+      until: health_check.status == 200
+      retries: 5
+      delay: 3
+      tags: [verify]
+    
+    - name: Display update status
+      debug:
+        msg: 
+          - "Agent updated: {{ git_update.changed }}"
+          - "Current version: {{ git_update.after | default('unknown') }}"
+          - "Health status: {{ health_check.json }}"

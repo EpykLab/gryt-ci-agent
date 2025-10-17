@@ -1,0 +1,39 @@
+---
+# Global variables for all hosts
+
+# Python interpreter
+ansible_python_interpreter: /usr/bin/python3
+
+# Timezone
+timezone: "UTC"
+
+# System packages to install
+system_packages:
+  - curl
+  - wget
+  - git
+  - vim
+  - htop
+  - net-tools
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - apt-transport-https
+  - software-properties-common
+  - unattended-upgrades
+  - fail2ban
+
+# Gryt user and group
+gryt_user: gryt
+gryt_group: gryt
+gryt_home: /home/gryt
+
+# Agent installation directory
+agent_install_dir: /opt/gryt-ci-agent
+
+# Git repository (update with your actual repo)
+agent_git_repo: "https://github.com/your-org/gryt-ci-agent.git"
+agent_git_version: "main"  # or specific tag/branch
+
+# Python version
+python_version: "3.12"

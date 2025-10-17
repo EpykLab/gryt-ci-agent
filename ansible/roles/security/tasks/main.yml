@@ -1,0 +1,191 @@
+---
+# Security hardening tasks
+
+- name: Disable root login via SSH
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin no'
+    state: present
+  notify: restart sshd
+  tags: [security, ssh]
+
+- name: Disable password authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+    state: present
+  notify: restart sshd
+  when: disable_password_auth | default(true)
+  tags: [security, ssh]
+
+- name: Configure SSH to use only strong ciphers
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?Ciphers'
+    line: 'Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr'
+    state: present
+  notify: restart sshd
+  tags: [security, ssh]
+
+- name: Configure SSH to use only strong MACs
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?MACs'
+    line: 'MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256'
+    state: present
+  notify: restart sshd
+  tags: [security, ssh]
+
+- name: Set SSH ClientAliveInterval
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?ClientAliveInterval'
+    line: 'ClientAliveInterval 300'
+    state: present
+  notify: restart sshd
+  tags: [security, ssh]
+
+- name: Set SSH ClientAliveCountMax
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?ClientAliveCountMax'
+    line: 'ClientAliveCountMax 2'
+    state: present
+  notify: restart sshd
+  tags: [security, ssh]
+
+- name: Configure UFW defaults
+  ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: 'incoming', policy: 'deny' }
+    - { direction: 'outgoing', policy: 'allow' }
+  when: ufw_enabled | default(true)
+  tags: [security, firewall]
+
+- name: Allow SSH through UFW
+  ufw:
+    rule: allow
+    port: '22'
+    proto: tcp
+  when: ufw_enabled | default(true) and ufw_allow_ssh | default(true)
+  tags: [security, firewall]
+
+- name: Allow agent port from specific IPs
+  ufw:
+    rule: allow
+    port: "{{ agent_port }}"
+    proto: tcp
+    from_ip: "{{ item }}"
+  loop: "{{ allowed_api_ips }}"
+  when: ufw_enabled | default(true) and allowed_api_ips is defined
+  tags: [security, firewall]
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+  when: ufw_enabled | default(true)
+  tags: [security, firewall]
+
+- name: Configure kernel parameters for security
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: true
+    sysctl_file: /etc/sysctl.d/99-security.conf
+  loop:
+    # IP Forwarding (disable unless needed)
+    - { name: 'net.ipv4.ip_forward', value: '0' }
+    - { name: 'net.ipv6.conf.all.forwarding', value: '0' }
+    # IP Spoofing protection
+    - { name: 'net.ipv4.conf.all.rp_filter', value: '1' }
+    - { name: 'net.ipv4.conf.default.rp_filter', value: '1' }
+    # Ignore ICMP redirects
+    - { name: 'net.ipv4.conf.all.accept_redirects', value: '0' }
+    - { name: 'net.ipv6.conf.all.accept_redirects', value: '0' }
+    - { name: 'net.ipv4.conf.all.secure_redirects', value: '0' }
+    # Don't send redirects
+    - { name: 'net.ipv4.conf.all.send_redirects', value: '0' }
+    - { name: 'net.ipv4.conf.default.send_redirects', value: '0' }
+    # Ignore broadcast pings
+    - { name: 'net.ipv4.icmp_echo_ignore_broadcasts', value: '1' }
+    # Ignore bogus ICMP errors
+    - { name: 'net.ipv4.icmp_ignore_bogus_error_responses', value: '1' }
+    # Enable SYN cookies
+    - { name: 'net.ipv4.tcp_syncookies', value: '1' }
+    # Log suspicious packets
+    - { name: 'net.ipv4.conf.all.log_martians', value: '1' }
+    - { name: 'net.ipv4.conf.default.log_martians', value: '1' }
+  tags: [security, kernel]
+
+- name: Set secure file permissions for SSH config
+  file:
+    path: /etc/ssh/sshd_config
+    mode: '0600'
+    state: file
+  tags: [security, permissions]
+
+- name: Check if agent .envrc exists
+  stat:
+    path: "{{ agent_install_dir }}/.envrc"
+  register: envrc_stat
+  when: agent_install_dir is defined
+  tags: [security, permissions]
+
+- name: Set secure file permissions for agent .envrc
+  file:
+    path: "{{ agent_install_dir }}/.envrc"
+    mode: '0600'
+    state: file
+  when: 
+    - agent_install_dir is defined
+    - envrc_stat.stat is defined
+    - envrc_stat.stat.exists
+  tags: [security, permissions]
+
+- name: Configure auditd if installed
+  block:
+    - name: Install auditd
+      apt:
+        name: auditd
+        state: present
+
+    - name: Add audit rules for Docker
+      lineinfile:
+        path: /etc/audit/rules.d/docker.rules
+        line: "{{ item }}"
+        create: true
+        mode: '0640'
+      loop:
+        - "-w /usr/bin/docker -p wa -k docker"
+        - "-w /var/lib/docker -p wa -k docker"
+        - "-w /etc/docker -p wa -k docker"
+      notify: restart auditd
+
+    - name: Add audit rules for agent
+      lineinfile:
+        path: /etc/audit/rules.d/gryt-agent.rules
+        line: "{{ item }}"
+        create: true
+        mode: '0640'
+      loop:
+        - "-w {{ agent_install_dir }} -p wa -k gryt-agent"
+        - "-w /etc/systemd/system/{{ agent_service_name }}.service -p wa -k gryt-agent"
+      notify: restart auditd
+      when: agent_install_dir is defined
+  when: enable_auditd | default(false)
+  tags: [security, audit]
+
+- name: Disable unused services
+  systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  loop: "{{ services_to_disable }}"
+  when: services_to_disable is defined
+  ignore_errors: true
+  tags: [security, services]

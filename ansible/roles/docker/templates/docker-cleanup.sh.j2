@@ -1,0 +1,23 @@
+#!/bin/bash
+# Ansible managed - Docker cleanup script
+
+set -e
+
+echo "$(date): Starting Docker cleanup"
+
+# Remove stopped containers
+docker container prune -f
+
+# Remove unused images
+docker image prune -af
+
+# Remove unused volumes
+docker volume prune -f
+
+# Remove unused networks
+docker network prune -f
+
+# Show disk usage after cleanup
+docker system df
+
+echo "$(date): Docker cleanup completed"

@@ -1,0 +1,16 @@
+---
+# Default variables for docker role
+
+docker_cleanup_enabled: true
+docker_cleanup_schedule: "0 3 * * *"
+
+# Docker daemon configuration
+docker_log_driver: "json-file"
+docker_log_max_size: "10m"
+docker_log_max_file: "3"
+docker_storage_driver: "overlay2"
+
+# User namespace remapping (fixes permission issues with Docker volumes)
+# When enabled, Docker containers run as a mapped user instead of root
+docker_userns_remap_enabled: true
+docker_userns_remap_user: "dockremap"

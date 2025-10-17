@@ -1,0 +1,5 @@
+---
+# Default variables for common role
+
+reboot_after_upgrade: false
+timezone: "UTC"

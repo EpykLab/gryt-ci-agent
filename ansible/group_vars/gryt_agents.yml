@@ -1,0 +1,45 @@
+---
+# Variables specific to Gryt CI Agent hosts
+
+# Agent configuration
+# IMPORTANT: Override these in inventories/production/group_vars/gryt_agents/vault.yml (encrypted)
+# or pass as extra vars at runtime
+
+# Agent API key (should be encrypted with ansible-vault)
+agent_api_key: "{{ vault_agent_api_key | default('CHANGE_ME_USE_VAULT') }}"
+
+# Encryption key (should be encrypted with ansible-vault)
+gryt_encryption_key: "{{ vault_gryt_encryption_key | default('CHANGE_ME_USE_VAULT') }}"
+
+# Agent server settings
+agent_host: "0.0.0.0"
+agent_port: 8080
+
+# Docker image for jobs
+gryt_docker_image: "ghcr.io/epyklab/gryt/pipeline:latest"
+
+# Firewall configuration
+# Main API IP addresses that can access the agent
+allowed_api_ips:
+  - "10.0.1.10"  # Replace with your main API server IP
+  # - "10.0.1.11"  # Add more if needed
+
+# UFW settings
+ufw_enabled: true
+ufw_allow_ssh: true
+
+# Docker settings
+docker_users:
+  - "{{ gryt_user }}"
+
+# Systemd service settings
+agent_service_name: gryt-agent
+agent_service_restart_policy: always
+agent_service_restart_sec: 10
+
+# Docker cleanup cron
+docker_cleanup_enabled: true
+docker_cleanup_schedule: "0 3 * * *"  # 3 AM daily
+
+# Monitoring
+enable_monitoring: false  # Set to true to enable Prometheus node_exporter

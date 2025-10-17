@@ -1,0 +1,13 @@
+/var/log/gryt-agent/*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 {{ gryt_user }} {{ gryt_group }}
+    sharedscripts
+    postrotate
+        systemctl reload {{ agent_service_name }} > /dev/null 2>&1 || true
+    endscript
+}

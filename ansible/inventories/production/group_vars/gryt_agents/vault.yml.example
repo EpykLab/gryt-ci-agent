@@ -1,0 +1,18 @@
+---
+# Example vault file for sensitive variables
+# 
+# To use:
+# 1. Copy this file to vault.yml: cp vault.yml.example vault.yml
+# 2. Edit vault.yml with your actual secrets
+# 3. Encrypt it: ansible-vault encrypt vault.yml
+# 4. Add .vault_pass file with your vault password (add to .gitignore!)
+#
+# To edit: ansible-vault edit vault.yml
+# To decrypt: ansible-vault decrypt vault.yml
+# To view: ansible-vault view vault.yml
+
+# Agent API key (generate with: openssl rand -hex 32)
+vault_agent_api_key: "your-secure-api-key-here-32-chars-minimum"
+
+# Encryption key (must match main API)
+vault_gryt_encryption_key: "your-base64-encryption-key-here"

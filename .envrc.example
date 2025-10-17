@@ -1,0 +1,14 @@
+# Gryt CI Agent Configuration
+
+# API Key for authentication (must match main API's AGENT_API_KEY)
+export AGENT_API_KEY="your-secure-random-api-key-here"
+
+# Encryption key (must match main API's GRYT_ENCRYPTION_KEY)
+export GRYT_ENCRYPTION_KEY="your-base64-encryption-key-here"
+
+# Agent server configuration
+export AGENT_HOST="0.0.0.0"
+export AGENT_PORT="8080"
+
+# Default Docker image for jobs
+export GRYT_DOCKER_IMAGE="ghcr.io/epyklab/gryt/pipeline:latest"

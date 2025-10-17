@@ -1,0 +1,47 @@
+---
+# Main playbook for Gryt CI Agent deployment
+# This playbook configures Ubuntu 24.04 LTS VMs to run the Gryt CI Agent
+
+- name: Deploy Gryt CI Agent
+  hosts: gryt_agents
+  become: true
+  gather_facts: true
+  
+  pre_tasks:
+    - name: Validate required variables are set
+      assert:
+        that:
+          - agent_api_key is defined
+          - gryt_encryption_key is defined
+          - agent_host is defined
+          - agent_port is defined
+        fail_msg: "Required variables are not defined. Check your inventory or group_vars."
+    
+    - name: Update apt cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+      tags: [always]
+
+  roles:
+    - role: common
+      tags: [common, system]
+    
+    - role: security
+      tags: [security]
+    
+    - role: docker
+      tags: [docker]
+    
+    - role: gryt_agent
+      tags: [gryt_agent, agent]
+
+  post_tasks:
+    - name: Display agent information
+      debug:
+        msg:
+          - "Gryt CI Agent installation complete!"
+          - "Agent URL: http://{{ ansible_default_ipv4.address }}:{{ agent_port }}"
+          - "Health check: curl http://{{ ansible_default_ipv4.address }}:{{ agent_port }}/health"
+          - "View logs: journalctl -u gryt-agent -f"
+      tags: [always]

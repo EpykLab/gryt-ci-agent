@@ -1,0 +1,68 @@
+---
+# Playbook to rotate agent API keys
+# Usage: ansible-playbook playbooks/rotate-keys.yml -e "new_agent_api_key=xxx"
+
+- name: Rotate Agent API Keys
+  hosts: gryt_agents
+  become: true
+  gather_facts: false
+  
+  vars_prompt:
+    - name: new_agent_api_key
+      prompt: "Enter new API key (leave blank to generate)"
+      private: true
+  
+  pre_tasks:
+    - name: Generate new API key if not provided
+      set_fact:
+        new_agent_api_key: "{{ lookup('password', '/dev/null chars=ascii_letters,digits length=64') }}"
+      when: new_agent_api_key == ""
+      delegate_to: localhost
+      run_once: true
+    
+    - name: Display new API key
+      debug:
+        msg: "New API key: {{ new_agent_api_key }}"
+      run_once: true
+  
+  tasks:
+    - name: Backup current configuration
+      copy:
+        src: "{{ agent_install_dir }}/.envrc"
+        dest: "{{ agent_install_dir }}/.envrc.backup.{{ ansible_date_time.epoch }}"
+        remote_src: true
+      tags: [backup]
+    
+    - name: Update API key in configuration
+      lineinfile:
+        path: "{{ agent_install_dir }}/.envrc"
+        regexp: '^export AGENT_API_KEY='
+        line: 'export AGENT_API_KEY="{{ new_agent_api_key }}"'
+      tags: [update]
+    
+    - name: Restart agent service
+      systemd:
+        name: "{{ agent_service_name }}"
+        state: restarted
+      tags: [restart]
+    
+    - name: Wait for agent to be ready
+      uri:
+        url: "http://localhost:{{ agent_port }}/health"
+        method: GET
+        status_code: 200
+      register: health_check
+      until: health_check.status == 200
+      retries: 5
+      delay: 3
+      tags: [verify]
+  
+  post_tasks:
+    - name: Reminder
+      debug:
+        msg:
+          - "API key rotation complete!"
+          - "IMPORTANT: Update the main API with the new key:"
+          - "  export AGENT_API_KEY='{{ new_agent_api_key }}'"
+          - "  systemctl restart gryt-api"
+      run_once: true

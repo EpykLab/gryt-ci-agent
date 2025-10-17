@@ -1,0 +1,8 @@
+---
+# Default variables for gryt_agent role
+
+agent_service_name: gryt-agent
+agent_service_restart_policy: always
+agent_service_restart_sec: 10
+agent_service_start_limit_interval: 60
+agent_service_start_limit_burst: 3

@@ -1,0 +1,11 @@
+{
+  "log-driver": "{{ docker_log_driver }}",
+  "log-opts": {
+    "max-size": "{{ docker_log_max_size }}",
+    "max-file": "{{ docker_log_max_file }}"
+  },
+  "storage-driver": "{{ docker_storage_driver }}",
+  "live-restore": true,
+  "userland-proxy": false{% if docker_userns_remap_enabled | default(false) %},
+  "userns-remap": "{{ docker_userns_remap_user }}"{% endif %}
+}

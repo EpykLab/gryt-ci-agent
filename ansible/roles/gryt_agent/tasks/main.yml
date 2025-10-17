@@ -1,0 +1,94 @@
+---
+# Gryt CI Agent installation and configuration tasks
+
+- name: Create agent installation directory
+  file:
+    path: "{{ agent_install_dir }}"
+    state: directory
+    owner: "{{ gryt_user }}"
+    group: "{{ gryt_group }}"
+    mode: '0755'
+  tags: [agent, install]
+
+- name: Clone agent repository
+  git:
+    repo: "{{ agent_git_repo }}"
+    dest: "{{ agent_install_dir }}"
+    version: "{{ agent_git_version }}"
+    force: false
+  become_user: "{{ gryt_user }}"
+  register: git_clone
+  tags: [agent, install]
+
+- name: Install agent Python dependencies
+  pip:
+    name: "{{ agent_install_dir }}"
+    editable: true
+    executable: pip3
+  become_user: "{{ gryt_user }}"
+  tags: [agent, install, python]
+
+- name: Create agent configuration file
+  template:
+    src: envrc.j2
+    dest: "{{ agent_install_dir }}/.envrc"
+    owner: "{{ gryt_user }}"
+    group: "{{ gryt_group }}"
+    mode: '0600'
+  notify: restart gryt-agent
+  tags: [agent, config]
+
+- name: Install systemd service file
+  template:
+    src: gryt-agent.service.j2
+    dest: /etc/systemd/system/{{ agent_service_name }}.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart gryt-agent
+  tags: [agent, service]
+
+- name: Enable and start gryt-agent service
+  systemd:
+    name: "{{ agent_service_name }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  tags: [agent, service]
+
+- name: Wait for agent to be ready
+  uri:
+    url: "http://localhost:{{ agent_port }}/health"
+    method: GET
+    status_code: 200
+  register: agent_health
+  until: agent_health.status == 200
+  retries: 5
+  delay: 3
+  tags: [agent, test]
+
+- name: Display agent health status
+  debug:
+    msg: "Agent health: {{ agent_health.json }}"
+  when: agent_health.json is defined
+  tags: [agent, test]
+
+- name: Create log directory
+  file:
+    path: /var/log/gryt-agent
+    state: directory
+    owner: "{{ gryt_user }}"
+    group: "{{ gryt_group }}"
+    mode: '0755'
+  tags: [agent, logs]
+
+- name: Configure logrotate for agent
+  template:
+    src: logrotate.j2
+    dest: /etc/logrotate.d/gryt-agent
+    owner: root
+    group: root
+    mode: '0644'
+  tags: [agent, logs]

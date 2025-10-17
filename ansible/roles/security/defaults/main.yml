@@ -1,0 +1,14 @@
+---
+# Default variables for security role
+
+disable_password_auth: true
+ufw_enabled: true
+ufw_allow_ssh: true
+enable_auditd: false
+
+# Services to disable (customize based on your needs)
+services_to_disable: []
+# Example:
+# services_to_disable:
+#   - bluetooth
+#   - cups
