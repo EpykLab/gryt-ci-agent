@@ -32,8 +32,8 @@ gryt_home: /home/gryt
 agent_install_dir: /opt/gryt-ci-agent
 
 # Git repository (update with your actual repo)
-agent_git_repo: "https://github.com/your-org/gryt-ci-agent.git"
-agent_git_version: "main"  # or specific tag/branch
+agent_git_repo: "https://github.com/EpykLab/gryt-ci-agent.git"
+agent_git_version: "master"  # or specific tag/branch
 
 # Python version
 python_version: "3.12"

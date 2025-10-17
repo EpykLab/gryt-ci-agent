@@ -20,11 +20,26 @@
   register: git_clone
   tags: [agent, install]
 
+- name: Create Python virtual environment
+  command:
+    cmd: python3 -m venv {{ agent_install_dir }}/venv
+    creates: "{{ agent_install_dir }}/venv/bin/python"
+  become_user: "{{ gryt_user }}"
+  tags: [agent, install, python]
+
+- name: Upgrade pip in virtual environment
+  pip:
+    name: pip
+    state: latest
+    virtualenv: "{{ agent_install_dir }}/venv"
+  become_user: "{{ gryt_user }}"
+  tags: [agent, install, python]
+
 - name: Install agent Python dependencies
   pip:
     name: "{{ agent_install_dir }}"
     editable: true
-    executable: pip3
+    virtualenv: "{{ agent_install_dir }}/venv"
   become_user: "{{ gryt_user }}"
   tags: [agent, install, python]
 

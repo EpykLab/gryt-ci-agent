@@ -11,8 +11,8 @@ Group={{ gryt_group }}
 WorkingDirectory={{ agent_install_dir }}
 EnvironmentFile={{ agent_install_dir }}/.envrc
 
-# Start the agent
-ExecStart=/usr/bin/python3 -m agent.main
+# Start the agent using virtual environment
+ExecStart={{ agent_install_dir }}/venv/bin/python -m agent.main
 
 # Restart policy
 Restart={{ agent_service_restart_policy }}
