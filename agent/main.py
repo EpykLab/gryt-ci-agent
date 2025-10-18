@@ -13,6 +13,7 @@ from fastapi import FastAPI, HTTPException, Header, status
 from pydantic import BaseModel, Field
 
 from agent.executor import get_executor, JobExecutionError
+from agent.env_loader import get_env
 
 # Configure logging
 logging.basicConfig(
@@ -108,7 +109,7 @@ app = FastAPI(
 
 def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")) -> str:
     """Verify API key from header"""
-    expected_key = os.getenv("AGENT_API_KEY")
+    expected_key = get_env("AGENT_API_KEY")
 
     if not expected_key:
         logger.error("AGENT_API_KEY not configured")
@@ -118,7 +119,7 @@ def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")) -> str:
         )
 
     if x_api_key != expected_key:
-        logger.warning(f"Invalid API key provided")
+        logger.warning("Invalid API key provided")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API key"
